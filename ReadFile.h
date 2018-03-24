@@ -7,24 +7,22 @@
 
 #include <string>
 #include <stack>
+#include "SingleQuoteChecker.h"
+#include "CommentChecker.h"
 
 using namespace std;
 
 class ReadFile {
 private:
     string inputFile;
-    //std::stack<char> symbols;
+    SingleQuoteChecker *singleQuoteChecker;
+    CommentChecker *commentChecker;
 public:
     ReadFile(string fileName);
     ~ReadFile();
     string getInputFile();
     void setInputFile(string inputFile);
     bool readFile(string fileName);
-    bool checkBalance(stack<char> *myStack, char ch);
-    bool check_Parentheses(stack<char> *myStack, char c);
-    bool check_Slash_Slash(stack<char> *myStack, char c);
-    bool check_Slash_Asterish(stack<char> *myStack, char c);
-    bool check_Single_Comment(stack<char> *myStack, char c);
 };
 
 

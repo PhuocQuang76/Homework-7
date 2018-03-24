@@ -3,19 +3,31 @@
 //
 
 #include <iostream>
-#include "ReadFile.h"
 #include <sstream>
 #include <fstream>
-#include "Balance_Checking.h"
-
+#include <stack>
+#include <queue>
+#include "ReadFile.h"
+#include "BalanceChecker.h"
 
 using namespace std;
 ReadFile::ReadFile(string filename) {
     ReadFile::inputFile = filename;
+    bool *ignore = new bool();
+    *ignore = false;
+    bool *blockIgnore = new bool();
+    *blockIgnore = false;
+    char *previousChar = new char();
+    *previousChar= '\0';
+    std::queue<string> *pairs = new std::queue<string>();
+    std::stack<char> *operators = new std::stack<char>();
+    ReadFile::singleQuoteChecker = new SingleQuoteChecker(ignore, blockIgnore, previousChar, pairs, operators);
+    ReadFile::commentChecker = new CommentChecker(ignore, blockIgnore, previousChar, pairs, operators);
     //ReadFile::symbols = new stack(char);
 }
 ReadFile::~ReadFile() {
-
+    delete(ReadFile::singleQuoteChecker);
+    delete(ReadFile::commentChecker);
 }
 
 string ReadFile::getInputFile(){
@@ -29,79 +41,29 @@ void ReadFile::setInputFile(string inputFile) {
 
 bool ReadFile::readFile(string fileName){
     ifstream inFile(fileName);
+    BalanceChecker *balanceChecker = nullptr;
     bool isValid = true;
     if(inFile.is_open()){
         stack<char> symbols;
         string line;
         int lineNumber = 0;
         char c;
-        bool ignore = false;
         while (getline(inFile, line)) {
-            ignore = false;
             lineNumber++;
             cout << lineNumber << "\t";
             istringstream iss(line);
             //char comment ;
             while (iss.get(c)) {
-                cout << c;
-                // Check if symbols are: "//"
-                if(c == '/') {
-                    iss.get(c);
-                    if(c == '/'){
-                        ignore = check_Slash_Slash(&symbols,c);
-                    }
-//                    else if (c == '*'){
-//                        ignore = check_Slash_Asterish(&symbols,c);
-//                        while (getline(inFile,line)){
-//                            ignore = true;
-//                            cout << endl;
-//                            lineNumber++;
-//                            cout << lineNumber << "\t";
-//                            while(iss.get(c)){
-//                                cout << c;
-//                                if(c == '*'){
-//                                    iss.get(c);
-//                                    cout << c;
-//
-//                                    if(c == '/'){
-//                                        cout << c;
-//                                        ignore = false;
-//                                        break;
-//                                    }
-//                                }
-//                            }
-//
-//                        }
-//
-//                    }
-                    else{
-                        cout << c;
-                    }
+                switch(c) {
+                    case '/' :
+                    case '*':
+                        balanceChecker = ReadFile::commentChecker;
+                        break;
+                    case '\'':
+                        balanceChecker = ReadFile::singleQuoteChecker;
                 }
 
-
-//                if(c == '*'){
-//                    char first = c;
-//                    iss.get(c);
-//                    if(c != '/'){
-//                        cout << c;
-//                        if (!checkBalance(&symbols, first)) {
-//                            isValid = false;
-//                            break;
-//                        }
-//                        if (!checkBalance(&symbols, c)) {
-//                            isValid = false;
-//                            break;
-//                        }
-//                    }else{
-//                        cout << c;
-//                    }
-//                }
-
-                //Check parentheses '(' '{' '['
-                if (!ignore) {
-                   isValid = check_Parentheses(&symbols, c);
-                }
+                cout << balanceChecker->analyzeCharacter(c, lineNumber);
             }
             cout << endl;
         }
@@ -113,86 +75,4 @@ bool ReadFile::readFile(string fileName){
     }
     inFile.close();
     return  isValid;
- }
-
-bool ReadFile::checkBalance(stack<char> *myStack, char ch) {
-    //Check if stack is empty
-    if(myStack->empty()){
-        return false;
-    }
-
-    //Remove matching symbols from stack
-    char topCharacter;
-    topCharacter = myStack->top();
-    myStack->pop();
-
-    return ((topCharacter == '(') && (ch == ')')) || ((topCharacter == '[' ) && (ch == ']')) ||
-           ((topCharacter == '{') && (ch == '}'));
-}
-
-bool ReadFile::check_Parentheses(stack<char> *myStack, char c){
-    bool flag = true;
-    if ((c == '(') || (c == '{') || (c == '[')) {
-        myStack->push(c);        //push symbols(, {, [ into the stack
-    } else if ((c == ')') || (c == '}') || (c == ']')) {
-        if (!checkBalance(myStack, c)) {
-            flag =  false;
-        }
-    }
-    return flag;
-}
-
-bool ReadFile::check_Slash_Slash(stack<char> *myStack, char c) {
-    //bool flag = false;
-    //if (c == '/') {
-        cout << c;
-        //flag = true;
-//    }else if (c == '*'){
-//        cout << c;
-//        myStack->push('/');
-//        myStack->push('*');
-//        //ignore = true;
-    //}else{
-       // cout << c;
-        //ignore = true;
-    //}
-    return true;
-}
-
-//bool ReadFile::check_Slash_Asterish(stack<char> *myStack, char c) {
-////    bool flag = false;
-////    if(c == '*'){
-//        cout << c;
-//        myStack->push('/');
-//        myStack->push('*');
-////        flag = true;
-////    }
-//    return true;
-//}
-
-//bool REadFile::check_Asterish(stack<char> *myStack, char c){
-//    bool flag = true;
-//        char first = c;
-//        iss->get(c);
-//        if(c != '/'){
-//            cout << c;
-//            if (!checkBalance(myStack, first)) {
-//                flag = false;
-//                exit(1);
-//            }
-//            if (!checkBalance(myStack, c)) {
-//                flag = false;
-//                exit(1);
-//            }
-//        }else{
-//            cout << c;
-//
-//        }
-//    return flag;
-//}
-
-bool ReadFile::check_Single_Comment(stack<char> *myStack, char c){
-    bool flag = false;
-    if(c == '\''){
-    }
 }
