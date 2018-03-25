@@ -13,21 +13,41 @@
 using namespace std;
 ReadFile::ReadFile(string filename) {
     ReadFile::inputFile = filename;
-    bool *ignore = new bool();
+
+    ignore = new bool();
     *ignore = false;
-    bool *blockIgnore = new bool();
+    blockIgnore = new bool();
     *blockIgnore = false;
-    char *previousChar = new char();
+    previousChar = new char();
     *previousChar= '\0';
-    std::queue<string> *pairs = new std::queue<string>();
-    std::stack<char> *operators = new std::stack<char>();
+
+    pairs = new std::queue<string>();
+    operators = new std::stack<char>();
+
     ReadFile::singleQuoteChecker = new SingleQuoteChecker(ignore, blockIgnore, previousChar, pairs, operators);
     ReadFile::commentChecker = new CommentChecker(ignore, blockIgnore, previousChar, pairs, operators);
-    //ReadFile::symbols = new stack(char);
+    ReadFile::doubleQuoteChecker = new DoubleQuoteChecker(ignore, blockIgnore, previousChar, pairs, operators);
+    ReadFile::squareBlockChecker = new BlockChecker('[', ']', ignore, blockIgnore, previousChar, pairs, operators);
+    ReadFile::parenthesisBlockChecker = new BlockChecker('(', ')', ignore, blockIgnore, previousChar, pairs, operators);
+    ReadFile::curlyBraceBlockChecker = new BlockChecker('{', '}', ignore, blockIgnore, previousChar, pairs, operators);
 }
 ReadFile::~ReadFile() {
     delete(ReadFile::singleQuoteChecker);
     delete(ReadFile::commentChecker);
+
+    for (;ReadFile::operators->size() > 0;) {
+        operators->pop();
+    }
+    delete(ReadFile::operators);
+    for (;ReadFile::pairs->size() > 0;) {
+        ReadFile::pairs->pop();
+    }
+
+    delete(ignore);
+    delete(blockIgnore);
+    delete(previousChar);
+    delete(pairs);
+    delete(operators);
 }
 
 string ReadFile::getInputFile(){
@@ -61,18 +81,71 @@ bool ReadFile::readFile(string fileName){
                         break;
                     case '\'':
                         balanceChecker = ReadFile::singleQuoteChecker;
+                        break;
+                    case '\"':
+                        balanceChecker = ReadFile::doubleQuoteChecker;
+                        break;
+                    case '{':
+                    case '}':
+                        balanceChecker = ReadFile::curlyBraceBlockChecker;
+                        break;
+                    case '[':
+                    case ']':
+                        balanceChecker = ReadFile::squareBlockChecker;
+                        break;
+                    case '(':
+                    case ')':
+                        balanceChecker = ReadFile::parenthesisBlockChecker;
+                        break;
+                    default:
+                        balanceChecker = ReadFile::singleQuoteChecker;
                 }
 
                 cout << balanceChecker->analyzeCharacter(c, lineNumber);
             }
             cout << endl;
+            balanceChecker->resetIgnore();
+            if (balanceChecker->isNotQuoteBalancedInLine()) {
+                balanceChecker->displayMatches();
+                char c = balanceChecker->topCharacter();
+                if (c == '\'') {
+                    cout << "unbalance quote \' on line " << lineNumber;
+                } else if (c == '\"') {
+                    cout << "unbalance double quote \" on line " << lineNumber;
+                }
+                break;
+            }
         }
-        if(!symbols.empty()){
-            isValid = false;
-        }
+        balanceChecker->displayMatches();
+        ReadFile::checkForUnclosedBlocks();
+        isValid = balanceChecker->topCharacter() == '\0';
     }else{
         cout <<"Error opening file"<< endl;
     }
     inFile.close();
     return  isValid;
+}
+
+void ReadFile::checkForUnclosedBlocks() {
+    char top = this->singleQuoteChecker->topCharacter();
+    std::string message = "unbalanced ";
+    bool displayMessage = false;
+    switch(top) {
+        case '{':
+            displayMessage = true;
+            message.append("{ on line ");
+            message.append(std::to_string(ReadFile::curlyBraceBlockChecker->getLastLineDiscovered()));
+            break;
+        case '[':
+            displayMessage = true;
+            message.append("{ on line ");
+            message.append(std::to_string(ReadFile::squareBlockChecker->getLastLineDiscovered()));
+            break;
+        case '(':
+            displayMessage = true;
+            message.append("{ on line ");
+            message.append(std::to_string(ReadFile::parenthesisBlockChecker->getLastLineDiscovered()));
+            break;
+    }
+    if (displayMessage) std::cout<<message<<std::endl;
 }

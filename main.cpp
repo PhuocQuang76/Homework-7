@@ -7,7 +7,7 @@
 int main() {
 
    // cout << "Please enter filename for C++ code: " ;
-    string fileName = "good_balance.txt";
+    string fileName = "bad_balance2.txt";
     //cin >> fileName;
     ReadFile *readFile = new ReadFile(fileName);
     readFile->setInputFile(fileName);

@@ -1,7 +1,3 @@
-//
-// Created by Sangalang, Emmanuel on 3/24/18.
-//
-
 #ifndef HW_7_BALANCECHECKER_H
 #define HW_7_BALANCECHECKER_H
 
@@ -20,9 +16,12 @@ protected:
     std::stack<char> *operators;
 public:
     BalanceChecker(bool *ignore, bool *blockIgnore, char *previousChar, std::queue<std::string> *pairs, std::stack<char> *operators);
-    ~BalanceChecker();
+    virtual ~BalanceChecker();
     virtual char analyzeCharacter(char c, int line);
-    virtual void resetIgnore();
+    void resetIgnore();
+    bool isNotQuoteBalancedInLine();
+    char topCharacter();
+    void displayMatches();
 };
 
 

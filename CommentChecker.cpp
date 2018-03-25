@@ -6,10 +6,13 @@
 
 CommentChecker::CommentChecker(bool *ignore, bool *blockIgnore, char *previousChar, std::queue<std::string> *pairs,
                                std::stack<char> *operators) : BalanceChecker::BalanceChecker(ignore, blockIgnore,
-                               previousChar, pairs, operators) {}
+                               previousChar, pairs, operators) {
+    CommentChecker::blockIgnoreStartLine = new std::stack<int>();
+}
 
 CommentChecker::~CommentChecker() {
-    BalanceChecker::~BalanceChecker();
+    delete(blockIgnoreStartLine);
+    //BalanceChecker::~BalanceChecker();
 }
 
 char CommentChecker::analyzeCharacter(char c, int line) {
@@ -17,6 +20,7 @@ char CommentChecker::analyzeCharacter(char c, int line) {
         if (*previousChar == '*') {
             if (c == '/') {
                 *blockIgnore = false;
+                blockIgnoreStartLine->pop();
                 BalanceChecker::pairs->push("pair matching /* and */");
             }
         }
@@ -27,7 +31,7 @@ char CommentChecker::analyzeCharacter(char c, int line) {
             //do nothing
         } else if (c == '*') {
                 *blockIgnore = true;
-                blockIgnoreStartLine = line;
+                blockIgnoreStartLine->push(line);
         } else if (c == '/') {
             *ignore = true;
         }
